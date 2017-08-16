@@ -46,15 +46,23 @@ static NSString *TKDescribeSourceStates(NSArray *states)
 
 @implementation TKEvent
 
+- (instancetype)initWithName:(NSString *)name transitioningFromStates:(NSArray *)sourceStates toState:(TKState *)destinationState
+{
+    if (![name length]) [NSException raise:NSInvalidArgumentException format:@"The event name cannot be blank."];
+    if (!destinationState) [NSException raise:NSInvalidArgumentException format:@"The destination state cannot be nil."];
+    
+    if (self = [super init]) {
+        _name = name;
+        _sourceStates = sourceStates;
+        _destinationState = destinationState;
+    }
+    
+    return self;
+}
+
 + (instancetype)eventWithName:(NSString *)name transitioningFromStates:(NSArray *)sourceStates toState:(TKState *)destinationState
 {
-    if (! [name length]) [NSException raise:NSInvalidArgumentException format:@"The event name cannot be blank."];
-    if (!destinationState) [NSException raise:NSInvalidArgumentException format:@"The destination state cannot be nil."];
-    TKEvent *event = [self new];
-    event.name = name;
-    event.sourceStates = sourceStates;
-    event.destinationState = destinationState;
-    return event;
+    return [[TKEvent alloc] initWithName:name transitioningFromStates:sourceStates toState:destinationState];
 }
 
 - (NSString *)description
@@ -66,7 +74,7 @@ static NSString *TKDescribeSourceStates(NSArray *states)
 
 - (id)initWithCoder:(NSCoder *)aDecoder
 {
-    self = [self init];
+    self = [super init];
     if (!self) {
         return nil;
     }

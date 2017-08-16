@@ -31,13 +31,21 @@
 
 @implementation TKState
 
+- (instancetype)initWithName:(NSString *)name userInfo:(NSDictionary *)userInfo
+{
+    if (![name length]) [NSException raise:NSInvalidArgumentException format:@"The `name` cannot be blank."];
+    
+    if (self = [super init]) {
+        _name = name;
+        _userInfo = userInfo;
+    }
+    
+    return self;
+}
+
 + (instancetype)stateWithName:(NSString *)name userInfo:(NSDictionary *)userInfo
 {
-    if (! [name length]) [NSException raise:NSInvalidArgumentException format:@"The `name` cannot be blank."];
-    TKState *state = [self new];
-    state.name = name;
-    state.userInfo = userInfo;
-    return state;
+    return [[TKState alloc] initWithName:name userInfo:userInfo];
 }
 
 + (instancetype)stateWithName:(NSString *)name
@@ -67,7 +75,7 @@
 
 - (id)initWithCoder:(NSCoder *)aDecoder
 {
-    self = [self init];
+    self = [super init];
     if (!self) {
         return nil;
     }

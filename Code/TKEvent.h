@@ -31,6 +31,12 @@
 /// @name Creating an Event
 ///------------------------
 
+- (instancetype)init NS_UNAVAILABLE;
+
++ (instancetype)new NS_UNAVAILABLE;
+
+- (id)initWithCoder:(NSCoder *)aDecoder NS_DESIGNATED_INITIALIZER;
+
 /**
  Creates and returns a new event object with the given name, source states, and destination state.
  
@@ -39,6 +45,8 @@
  @param destinationState The state that the state machine will transition into after the event has fired.
  @return A newly created event object.
  */
+- (instancetype)initWithName:(NSString *)name transitioningFromStates:(NSArray *)sourceStates toState:(TKState *)destinationState NS_DESIGNATED_INITIALIZER;
+
 + (instancetype)eventWithName:(NSString *)name transitioningFromStates:(NSArray *)sourceStates toState:(TKState *)destinationState;
 
 ///------------------------------

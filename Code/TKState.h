@@ -31,6 +31,12 @@
 /// @name Creating a State
 ///-----------------------
 
+- (instancetype)init NS_UNAVAILABLE;
+
++ (instancetype)new NS_UNAVAILABLE;
+
+- (instancetype)initWithCoder:(NSCoder *)aDecoder NS_DESIGNATED_INITIALIZER;
+
 /**
  Creates and returns a new state object with the specified name and an optional userInfo dictionary.
  
@@ -38,6 +44,8 @@
  @param userInfo An optional dictionary of user info.
  @return A newly created state object with the specified name.
  */
+- (instancetype)initWithName:(NSString *)name userInfo:(NSDictionary *)userInfo NS_DESIGNATED_INITIALIZER;
+
 + (instancetype)stateWithName:(NSString *)name userInfo:(NSDictionary *)userInfo;
 
 /**
