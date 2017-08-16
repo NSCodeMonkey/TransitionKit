@@ -45,7 +45,7 @@
 
 + (instancetype)stateWithName:(NSString *)name userInfo:(NSDictionary *)userInfo
 {
-    return [[TKState alloc] initWithName:name userInfo:userInfo];
+    return [[self alloc] initWithName:name userInfo:userInfo];
 }
 
 + (instancetype)stateWithName:(NSString *)name

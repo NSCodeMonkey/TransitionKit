@@ -62,7 +62,7 @@ static NSString *TKDescribeSourceStates(NSArray *states)
 
 + (instancetype)eventWithName:(NSString *)name transitioningFromStates:(NSArray *)sourceStates toState:(TKState *)destinationState
 {
-    return [[TKEvent alloc] initWithName:name transitioningFromStates:sourceStates toState:destinationState];
+    return [[self alloc] initWithName:name transitioningFromStates:sourceStates toState:destinationState];
 }
 
 - (NSString *)description
