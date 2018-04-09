@@ -8,7 +8,7 @@ target 'iOS Specs' do
 end
 
 target 'OS X Specs' do
-  platform :osx, '10.7'
+  platform :osx, '10.8'
   
   pod 'TransitionKit', path: '.'
   pod 'Kiwi'
