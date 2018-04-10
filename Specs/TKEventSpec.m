@@ -19,6 +19,7 @@
 //
 
 #import "Kiwi.h"
+#import "TKState.h"
 #import "TKEvent.h"
 
 SPEC_BEGIN(TKEventSpec)
@@ -40,10 +41,26 @@ describe(@"eventWithName:transitioningFromStates:toState:", ^{
         });
     });
     
-    context(@"when the destinationState is `nil`", ^{
+    context(@"when the sourceStates is `nil`", ^{
         it(@"raises an NSInvalidArgumentException", ^{
             [[theBlock(^{
                 [TKEvent eventWithName:@"Name" transitioningFromStates:nil toState:nil];
+            }) should] raiseWithName:NSInvalidArgumentException reason:@"The source states cannot be nil or blank."];
+        });
+    });
+    
+    context(@"when the sourceStates is blank", ^{
+        it(@"raises an NSInvalidArgumentException", ^{
+            [[theBlock(^{
+                [TKEvent eventWithName:@"Name" transitioningFromStates:@[] toState:nil];
+            }) should] raiseWithName:NSInvalidArgumentException reason:@"The source states cannot be nil or blank."];
+        });
+    });
+    
+    context(@"when the destinationState is `nil`", ^{
+        it(@"raises an NSInvalidArgumentException", ^{
+            [[theBlock(^{
+                [TKEvent eventWithName:@"Name" transitioningFromStates:@[ [TKState stateWithName:@"Name"] ] toState:nil];
             }) should] raiseWithName:NSInvalidArgumentException reason:@"The destination state cannot be nil."];
         });
     });
