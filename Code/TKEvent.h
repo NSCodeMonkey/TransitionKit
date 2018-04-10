@@ -56,9 +56,9 @@
 @property (nonatomic, copy, readonly) NSString *name;
 
 /**
- An optional array of states that the state machine must be in before the event is allowed to fire.
+ An array of states that the state machine must be in before the event is allowed to fire.
  
- If `nil`, then the event can be fired when the state machine is in any state.
+ Cannot be `nil`.
  */
 @property (nonatomic, copy, readonly) NSArray *sourceStates;
 

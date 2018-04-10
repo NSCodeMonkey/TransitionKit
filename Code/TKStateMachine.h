@@ -183,7 +183,7 @@
 /**
  Returns a Boolean value that indicates if the specified event can be fired.
  
- @param eventOrEventName A `TKEvent` object or an `NSString` object that identifies an event by name. The source states of the specified event is compared with the current state of the receiver. If the `sourceStates` of the event is `nil`, then the event can be fired from any state. If the `sourcesStates` is not `nil`, then the event can only be fired if it includes the `currentState` of the receiver.
+ @param eventOrEventName A `TKEvent` object or an `NSString` object that identifies an event by name. The source states of the specified event is compared with the current state of the receiver. The event can only be fired if it includes the `currentState` of the receiver.
  @return `YES` if the event can be fired, else `NO`.
  */
 - (BOOL)canFireEvent:(id)eventOrEventName;
