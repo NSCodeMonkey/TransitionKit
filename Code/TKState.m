@@ -51,6 +51,36 @@
     return [NSString stringWithFormat:@"<%@:%p '%@'>", NSStringFromClass([self class]), self, self.name];
 }
 
+#pragma mark - Equality
+
+- (BOOL)isEqual:(id)object
+{
+    if (self == object) {
+        return YES;
+    }
+    
+    if (![object isKindOfClass:[TKState class]]) {
+        return NO;
+    }
+    
+    return [self isEqualToState:(TKState*)object];
+}
+
+- (BOOL)isEqualToState:(TKState*)state
+{
+    if (!state) {
+        return NO;
+    }
+    
+    BOOL haveEqualNames = (!_name && !state->_name) || [_name isEqualToString:state->_name];
+    
+    return haveEqualNames;
+}
+
+- (NSUInteger)hash {
+    return [_name hash];
+}
+
 #pragma mark - NSCopying
 
 - (id)copyWithZone:(NSZone *)zone
