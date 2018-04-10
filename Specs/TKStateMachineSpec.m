@@ -631,4 +631,89 @@ describe(@"A State Machine Modeling Dating", ^{
     });
 });
 
+describe(@"A State Machine with Multiple Event Destinations", ^{
+    __block TKState *stateA;
+    __block TKState *stateB;
+    __block TKState *stateC;
+    __block TKState *stateX;
+    __block TKState *stateY;
+    __block TKEvent *event0;
+    __block TKEvent *event1;
+
+    beforeEach(^{
+        stateMachine = [TKStateMachine new];
+        
+        stateA = [TKState stateWithName:@"A"];
+        stateB = [TKState stateWithName:@"B"];
+        stateC = [TKState stateWithName:@"C"];
+        stateX = [TKState stateWithName:@"X"];
+        stateY = [TKState stateWithName:@"Y"];
+        
+        [stateMachine addStates:@[ stateA, stateB, stateC, stateX, stateY ]];
+        
+        event0 = [TKEvent eventWithName:@"E0"];
+        [event0 addTransitionFromStates:@[ stateA, stateB ] toState:stateX];
+        [event0 addTransitionFromStates:@[ stateC ] toState:stateY];
+
+        event1 = [TKEvent eventWithName:@"E1"];
+        [event1 addTransitionFromStates:@[ stateX ] toState:stateA];
+        [event1 addTransitionFromStates:@[ stateY ] toState:stateB];
+        
+        [stateMachine addEvents:@[ event0, event1 ]];
+    });
+    
+    context(@"when starts with state `A`", ^{
+        beforeEach(^{
+            stateMachine.initialState = stateA;
+            [stateMachine activate];
+        });
+        
+        it(@"when fired", ^{
+            BOOL succeed = [stateMachine fireEvent:event0 userInfo:nil error:nil];
+            [[theValue(succeed) should] beTrue];
+            [[stateMachine.currentState should] equal:stateX];
+        });
+        
+        it(@"continuously fire event", ^{
+            [stateMachine fireEvent:event0 userInfo:nil error:nil];
+            [[stateMachine.currentState should] equal:stateX];
+            
+            [stateMachine fireEvent:event1 userInfo:nil error:nil];
+            [[stateMachine.currentState should] equal:stateA];
+            
+            [stateMachine fireEvent:event0 userInfo:nil error:nil];
+            [[stateMachine.currentState should] equal:stateX];
+        });
+            
+        it(@"cannot be fire", ^{
+            BOOL succeed = [stateMachine fireEvent:event1 userInfo:nil error:nil];
+            [[theValue(succeed) should] beFalse];
+        });
+    });
+    
+    context(@"when starts with state `C`", ^{
+        beforeEach(^{
+            stateMachine.initialState = stateC;
+            [stateMachine activate];
+        });
+        
+        it(@"continuously fire event", ^{
+            [stateMachine fireEvent:event0 userInfo:nil error:nil];
+            [[stateMachine.currentState should] equal:stateY];
+            
+            [stateMachine fireEvent:event1 userInfo:nil error:nil];
+            [[stateMachine.currentState should] equal:stateB];
+            
+            [stateMachine fireEvent:event0 userInfo:nil error:nil];
+            [[stateMachine.currentState should] equal:stateX];
+            
+            [stateMachine fireEvent:event1 userInfo:nil error:nil];
+            [[stateMachine.currentState should] equal:stateA];
+            
+            [stateMachine fireEvent:event0 userInfo:nil error:nil];
+            [[stateMachine.currentState should] equal:stateX];
+        });
+    });
+});
+
 SPEC_END

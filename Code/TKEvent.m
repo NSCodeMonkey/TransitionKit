@@ -21,10 +21,8 @@
 #import "TKEvent.h"
 #import "TKState.h"
 
-static NSString *TKDescribeSourceStates(NSArray *states)
+static NSString *TKDescribeStates(NSArray *states)
 {
-    if (! [states count]) return @"any state";
-    
     NSMutableString *description = [NSMutableString string];
     [states enumerateObjectsUsingBlock:^(TKState *state, NSUInteger idx, BOOL *stop) {
         NSString *separator = @"";
@@ -36,39 +34,122 @@ static NSString *TKDescribeSourceStates(NSArray *states)
 
 
 @interface TKEvent ()
-@property (nonatomic, copy, readwrite) NSString *name;
-@property (nonatomic, copy, readwrite) NSArray *sourceStates;
-@property (nonatomic, strong, readwrite) TKState *destinationState;
+
+@property (nonatomic, copy) NSString *name;
+
+/**
+ key -> sourceStates
+ value -> destinationState
+ */
+@property (nonatomic) NSMutableDictionary<TKState*, TKState*> *transitionMap;
+
 @property (nonatomic, copy) BOOL (^shouldFireEventBlock)(TKEvent *, TKTransition *);
 @property (nonatomic, copy) void (^willFireEventBlock)(TKEvent *, TKTransition *);
 @property (nonatomic, copy) void (^didFireEventBlock)(TKEvent *, TKTransition *);
+
 @end
 
 @implementation TKEvent
 
-- (instancetype)initWithName:(NSString *)name transitioningFromStates:(NSArray *)sourceStates toState:(TKState *)destinationState
+- (instancetype)initWithName:(NSString *)name
 {
     if (![name length]) [NSException raise:NSInvalidArgumentException format:@"The event name cannot be blank."];
-    if (![sourceStates count]) [NSException raise:NSInvalidArgumentException format:@"The source states cannot be nil or blank."];
-    if (!destinationState) [NSException raise:NSInvalidArgumentException format:@"The destination state cannot be nil."];
     
-    if (self = [super init]) {
+    self = [super init];
+    if (self)
+    {
         _name = name;
-        _sourceStates = sourceStates;
-        _destinationState = destinationState;
+        _transitionMap = NSMutableDictionary.dictionary;
     }
-    
     return self;
 }
 
-+ (instancetype)eventWithName:(NSString *)name transitioningFromStates:(NSArray *)sourceStates toState:(TKState *)destinationState
++ (instancetype)eventWithName:(NSString *)name
+{
+    return [[self alloc] initWithName:name];
+}
+
+- (instancetype)initWithName:(NSString *)name transitioningFromStates:(NSArray<TKState*> *)sourceStates toState:(TKState *)destinationState
+{
+    self = [self initWithName:name];
+    if (self)
+    {
+        [self addTransitionFromStates:sourceStates toState:destinationState];
+    }
+    return self;
+}
+
++ (instancetype)eventWithName:(NSString *)name transitioningFromStates:(NSArray<TKState*> *)sourceStates toState:(TKState *)destinationState
 {
     return [[self alloc] initWithName:name transitioningFromStates:sourceStates toState:destinationState];
 }
 
+- (void)addTransitionFromStates:(NSArray<TKState*> *)sourceStates toState:(TKState *)destinationState
+{
+    if (![sourceStates count]) [NSException raise:NSInvalidArgumentException format:@"The source states cannot be nil or blank."];
+    if (!destinationState) [NSException raise:NSInvalidArgumentException format:@"The destination state cannot be nil."];
+    
+    for (TKState *sourceState in sourceStates)
+    {
+        if (![sourceState isKindOfClass:[TKState class]])
+        {
+            [NSException raise:NSInvalidArgumentException format:@"Expected a `TKState` object, instead got a `%@` (%@)", [sourceState class], sourceState];
+        }
+        
+        // make sure the source state is not yet registered
+        if ([self sourceStateWithName:sourceState.name])
+        {
+            [NSException raise:NSInvalidArgumentException format:@"A source state named `%@` is already registered for the event `%@`", sourceState.name, self.name];
+        }
+        
+        _transitionMap[sourceState] = destinationState;
+    }
+}
+
 - (NSString *)description
 {
-    return [NSString stringWithFormat:@"<%@:%p '%@' transitions from %@ to '%@'>", NSStringFromClass([self class]), self, self.name, TKDescribeSourceStates(self.sourceStates), self.destinationState.name];
+    return [NSString stringWithFormat:@"<%@:%p '%@' transitions from %@ to %@>", NSStringFromClass([self class]), self, self.name, TKDescribeStates(self.sourceStates), TKDescribeStates(self.destinationStates)];
+}
+
+#pragma mark - Accessors
+
+- (NSArray*)sourceStates
+{
+    return _transitionMap.allKeys;
+}
+
+- (NSArray*)destinationStates
+{
+    return [NSOrderedSet orderedSetWithArray:_transitionMap.allValues].array;
+}
+
+- (TKState *)destinationStateForSourceState:(TKState *)sourceState
+{
+    return _transitionMap[sourceState];
+}
+
+#pragma mark - Private methods
+
+- (TKState *)sourceStateWithName:(NSString *)name
+{
+    return [self stateWithName:name inStates:_transitionMap.allKeys];
+}
+
+- (TKState *)destinationStateWithName:(NSString *)name
+{
+    return [self stateWithName:name inStates:_transitionMap.allValues];
+}
+
+- (TKState *)stateWithName:(NSString *)name inStates:(NSArray *)states
+{
+    for (TKState *state in states)
+    {
+        if ([state.name isEqualToString:name])
+        {
+            return state;
+        }
+    }
+    return nil;
 }
 
 #pragma mark - NSCoding
@@ -76,21 +157,18 @@ static NSString *TKDescribeSourceStates(NSArray *states)
 - (id)initWithCoder:(NSCoder *)aDecoder
 {
     self = [super init];
-    if (!self) {
-        return nil;
+    if (self)
+    {
+        _name = [aDecoder decodeObjectForKey:@"name"];
+        _transitionMap = [aDecoder decodeObjectForKey:@"transitionMap"];
     }
-    
-    self.name = [aDecoder decodeObjectForKey:@"name"];
-    self.sourceStates = [aDecoder decodeObjectForKey:@"sourceStates"];
-    self.destinationState = [aDecoder decodeObjectForKey:@"destinationState"];
     return self;
 }
 
 - (void)encodeWithCoder:(NSCoder *)aCoder
 {
-    [aCoder encodeObject:self.name forKey:@"name"];
-    [aCoder encodeObject:self.sourceStates forKey:@"sourceStates"];
-    [aCoder encodeObject:self.destinationState forKey:@"destinationState"];
+    [aCoder encodeObject:_name forKey:@"name"];
+    [aCoder encodeObject:_transitionMap forKey:@"transitionMap"];
 }
 
 #pragma mark - NSCopying
@@ -99,8 +177,7 @@ static NSString *TKDescribeSourceStates(NSArray *states)
 {
     TKEvent *copiedEvent = [[[self class] allocWithZone:zone] init];
     copiedEvent.name = self.name;
-    copiedEvent.sourceStates = self.sourceStates;
-    copiedEvent.destinationState = self.destinationState;
+    copiedEvent.transitionMap = self.transitionMap;
     copiedEvent.shouldFireEventBlock = self.shouldFireEventBlock;
     copiedEvent.willFireEventBlock = self.willFireEventBlock;
     copiedEvent.didFireEventBlock = self.didFireEventBlock;

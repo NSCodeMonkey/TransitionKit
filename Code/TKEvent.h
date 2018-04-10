@@ -38,6 +38,16 @@
 - (id)initWithCoder:(NSCoder *)aDecoder NS_DESIGNATED_INITIALIZER;
 
 /**
+ Creates and returns a new event object with just given name.
+ 
+ @param name The name for the event.
+ @return A newly created event object.
+ */
+- (instancetype)initWithName:(NSString *)name NS_DESIGNATED_INITIALIZER;
+
++ (instancetype)eventWithName:(NSString *)name;
+
+/**
  Creates and returns a new event object with the given name, source states, and destination state.
  
  @param name The name for the event.
@@ -45,9 +55,18 @@
  @param destinationState The state that the state machine will transition into after the event has fired.
  @return A newly created event object.
  */
-- (instancetype)initWithName:(NSString *)name transitioningFromStates:(NSArray *)sourceStates toState:(TKState *)destinationState NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithName:(NSString *)name transitioningFromStates:(NSArray<TKState*> *)sourceStates toState:(TKState *)destinationState;
 
-+ (instancetype)eventWithName:(NSString *)name transitioningFromStates:(NSArray *)sourceStates toState:(TKState *)destinationState;
++ (instancetype)eventWithName:(NSString *)name transitioningFromStates:(NSArray<TKState*> *)sourceStates toState:(TKState *)destinationState;
+
+/**
+ Adds further transitions for the same event. The new source states must be disjunct to existing source states for this
+ event. However, it is possible call this method multiple times to add source states for the same destination state.
+ 
+ @param sourceStates An array of `TKState` objects specifying the source states that the machine must be in for the event to be permitted to fire.
+ @param destinationState The state that the state machine will transition into after the event has fired.
+ */
+- (void)addTransitionFromStates:(NSArray<TKState*> *)sourceStates toState:(TKState *)destinationState;
 
 ///------------------------------
 /// @name Accessing Event Details
@@ -63,11 +82,19 @@
 @property (nonatomic, copy, readonly) NSArray *sourceStates;
 
 /**
- The state that the state machine will transition into after the event has fired.
+ An array of states that the state machine will transition into after the event has fired.
  
  Cannot be `nil`.
  */
-@property (nonatomic, strong, readonly) TKState *destinationState;
+@property (nonatomic, copy, readonly) NSArray *destinationStates;
+
+/**
+ There are multiple destination states possible, with this method you can lookup the events destination state by
+ providing a source state.
+ 
+ @return the matching destination state for the given source state or `nil`
+ */
+- (TKState *)destinationStateForSourceState:(TKState *)sourceState;
 
 ///------------------------------
 /// @name Setting Callback Blocks

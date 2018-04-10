@@ -153,14 +153,16 @@ static NSString *TKQuoteString(NSString *string)
 {
     TKRaiseIfActive();
     if (! event) [NSException raise:NSInvalidArgumentException format:@"Cannot add a `nil` event to the state machine."];
-    if (event.sourceStates) {
-        for (TKState *state in event.sourceStates) {
-            if (! [self.mutableStates containsObject:state]) {
-                [NSException raise:NSInternalInconsistencyException format:@"Cannot add event '%@' to the state machine: the event references a state '%@', which has not been added to the state machine.", event.name, state.name];
-            }
+    for (TKState *state in event.sourceStates) {
+        if (! [self.mutableStates containsObject:state]) {
+            [NSException raise:NSInternalInconsistencyException format:@"Cannot add event '%@' to the state machine: the event references a state '%@', which has not been added to the state machine.", event.name, state.name];
         }
     }
-    if (! [self.mutableStates containsObject:event.destinationState]) [NSException raise:NSInternalInconsistencyException format:@"Cannot add event '%@' to the state machine: the event references a state '%@', which has not been added to the state machine.", event.name, event.destinationState.name];
+    for (TKState *state in event.destinationStates) {
+        if (! [self.mutableStates containsObject:state]) {
+            [NSException raise:NSInternalInconsistencyException format:@"Cannot add event '%@' to the state machine: the event references a state '%@', which has not been added to the state machine.", event.name, state.name];
+        }
+    }
     [self.mutableEvents addObject:event];
 }
 
@@ -230,7 +232,7 @@ static NSString *TKQuoteString(NSString *string)
     }
 
     TKState *oldState = self.currentState;
-    TKState *newState = event.destinationState;
+    TKState *newState = [event destinationStateForSourceState:oldState];
     
     if (event.willFireEventBlock) event.willFireEventBlock(event, transition);
     
@@ -296,6 +298,8 @@ static NSString *TKQuoteString(NSString *string)
     }
     
     for (TKEvent *event in self.events) {
+        [copiedStateMachine addEvent:[event copy]];
+#if 0
         NSMutableArray *sourceStates = [NSMutableArray arrayWithCapacity:[event.sourceStates count]];
         for (TKState *sourceState in event.sourceStates) {
             [sourceStates addObject:[copiedStateMachine stateNamed:sourceState.name]];
@@ -303,6 +307,7 @@ static NSString *TKQuoteString(NSString *string)
         TKState *destinationState = [copiedStateMachine stateNamed:event.destinationState.name];
         TKEvent *copiedEvent = [TKEvent eventWithName:event.name transitioningFromStates:sourceStates toState:destinationState];
         [copiedStateMachine addEvent:copiedEvent];
+#endif
     }
     return copiedStateMachine;
 }
@@ -327,7 +332,8 @@ static NSString *TKQuoteString(NSString *string)
     }
     for (TKEvent *event in self.events) {
         for (TKState *sourceState in event.sourceStates) {
-            [dotDescription appendFormat:@"  \"%@\" -> \"%@\" [label=\"%@\", fontname=\"Menlo Italic\", fontsize=9];\n", sourceState.name, event.destinationState.name, event.name];
+            TKState *destinationState = [event destinationStateForSourceState:sourceState];
+            [dotDescription appendFormat:@"  \"%@\" -> \"%@\" [label=\"%@\", fontname=\"Menlo Italic\", fontsize=9];\n", sourceState.name, destinationState.name, event.name];
         }
     }
     [dotDescription appendString:@"}"];
