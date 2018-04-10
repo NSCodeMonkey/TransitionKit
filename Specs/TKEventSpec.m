@@ -19,6 +19,7 @@
 //
 
 #import "Kiwi.h"
+#import "TKState.h"
 #import "TKEvent.h"
 
 SPEC_BEGIN(TKEventSpec)
@@ -40,11 +41,103 @@ describe(@"eventWithName:transitioningFromStates:toState:", ^{
         });
     });
     
-    context(@"when the destinationState is `nil`", ^{
+    context(@"when the sourceStates is `nil`", ^{
         it(@"raises an NSInvalidArgumentException", ^{
             [[theBlock(^{
                 [TKEvent eventWithName:@"Name" transitioningFromStates:nil toState:nil];
+            }) should] raiseWithName:NSInvalidArgumentException reason:@"The source states cannot be nil or blank."];
+        });
+    });
+    
+    context(@"when the sourceStates is blank", ^{
+        it(@"raises an NSInvalidArgumentException", ^{
+            [[theBlock(^{
+                [TKEvent eventWithName:@"Name" transitioningFromStates:@[] toState:nil];
+            }) should] raiseWithName:NSInvalidArgumentException reason:@"The source states cannot be nil or blank."];
+        });
+    });
+    
+    context(@"when the destinationState is `nil`", ^{
+        it(@"raises an NSInvalidArgumentException", ^{
+            [[theBlock(^{
+                [TKEvent eventWithName:@"Name" transitioningFromStates:@[ [TKState stateWithName:@"Name"] ] toState:nil];
             }) should] raiseWithName:NSInvalidArgumentException reason:@"The destination state cannot be nil."];
+        });
+    });
+});
+
+
+describe(@"addTransitionFromStates:toState:", ^{
+    context(@"when multiple destinations are added", ^{
+        __block TKEvent *event;
+        __block TKState *stateA = [TKState stateWithName:@"A"];
+        __block TKState *stateB = [TKState stateWithName:@"B"];
+        __block TKState *stateC = [TKState stateWithName:@"C"];
+        __block TKState *stateX = [TKState stateWithName:@"X"];
+        __block TKState *stateY = [TKState stateWithName:@"Y"];
+        
+        beforeEach(^{
+            event = [TKEvent eventWithName:@"MultiEvent" transitioningFromStates:@[ stateA, stateB  ] toState:stateX];
+        });
+        
+        context(@"when an existing source and an existing destination state is added", ^{
+            it(@"raises an exception", ^{
+                [[theBlock(^{
+                    [event addTransitionFromStates:@[ stateB ] toState:stateX];
+                }) should] raiseWithName:NSInvalidArgumentException reason:@"A source state named `B` is already registered for the event `MultiEvent`"];
+            });
+        });
+        
+        context(@"when an existing source state with a new destination state is added", ^{
+            it(@"raises an exception", ^{
+                [[theBlock(^{
+                    [event addTransitionFromStates:@[ stateB ] toState:stateY];
+                }) should] raiseWithName:NSInvalidArgumentException reason:@"A source state named `B` is already registered for the event `MultiEvent`"];
+            });
+        });
+
+        context(@"when a new source state is added to an existing destination", ^{
+            it(@"contains new and old states", ^{
+                [event addTransitionFromStates:@[ stateC ] toState:stateX];
+                
+                [[event.sourceStates should] contain:stateA];
+                [[event.sourceStates should] contain:stateB];
+                [[event.sourceStates should] contain:stateC];
+                [[[event.sourceStates should] have:3] items];
+                
+                [[event.destinationStates should] contain:stateX];
+                [[[event.destinationStates should] have:1] items];
+            });
+        });
+        
+        context(@"when a new source state is added to an new destination", ^{
+            it(@"contains new and old states", ^{
+                [event addTransitionFromStates:@[ stateC ] toState:stateY];
+                
+                [[event.sourceStates should] contain:stateA];
+                [[event.sourceStates should] contain:stateB];
+                [[event.sourceStates should] contain:stateC];
+                [[[event.sourceStates should] have:3] items];
+                
+                [[event.destinationStates should] contain:stateX];
+                [[event.destinationStates should] contain:stateY];
+                [[[event.destinationStates should] have:2] items];
+            });
+        });
+        
+        context(@"when exchange source states and destination states", ^{
+            it(@"contains all states", ^{
+                [event addTransitionFromStates:@[ stateX ] toState:stateA];
+                
+                [[event.sourceStates should] contain:stateA];
+                [[event.sourceStates should] contain:stateB];
+                [[event.sourceStates should] contain:stateX];
+                [[[event.sourceStates should] have:3] items];
+                
+                [[event.destinationStates should] contain:stateX];
+                [[event.destinationStates should] contain:stateA];
+                [[[event.destinationStates should] have:2] items];
+            });
         });
     });
 });

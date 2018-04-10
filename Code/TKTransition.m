@@ -43,7 +43,7 @@
 
 - (TKState *)destinationState
 {
-    return self.event.destinationState;
+    return [_event destinationStateForSourceState:_sourceState];
 }
 
 @end

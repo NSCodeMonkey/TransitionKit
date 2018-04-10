@@ -41,4 +41,31 @@ describe(@"stateWithName:entryBlock:exitBlock:", ^{
     });
 });
 
+describe(@"isEqual:", ^{
+    __block TKState *stateA0 = [TKState stateWithName:@"A"];
+    __block TKState *stateA1 = [TKState stateWithName:@"A"];
+    __block TKState *copiedStateA = [stateA0 copy];
+    __block TKState *stateB = [TKState stateWithName:@"B"];
+
+    context(@"when compared to state with same name", ^{
+        it(@"returns YES", ^{
+            [[theValue([stateA0 isEqual:stateA0]) should] beTrue];
+            [[theValue([stateA0 isEqual:stateA1]) should] beTrue];
+            [[theValue([stateA1 isEqual:stateA0]) should] beTrue];
+            [[theValue([stateA0 isEqual:copiedStateA]) should] beTrue];
+            [[theValue([stateA1 isEqual:copiedStateA]) should] beTrue];
+        });
+    });
+    
+    context(@"when compared to another state", ^{
+        it(@"returns NO", ^{
+            [[theValue([stateA0 isEqual:stateB]) should] beFalse];
+            [[theValue([stateA1 isEqual:stateB]) should] beFalse];
+            [[theValue([copiedStateA isEqual:stateB]) should] beFalse];
+        });
+    });
+});
+
+
+
 SPEC_END

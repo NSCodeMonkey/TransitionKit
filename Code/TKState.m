@@ -22,7 +22,6 @@
 
 @interface TKState ()
 @property (nonatomic, copy, readwrite) NSString *name;
-@property (nonatomic, copy, readwrite) NSDictionary *userInfo;
 @property (nonatomic, copy) void (^willEnterStateBlock)(TKState *, TKTransition *);
 @property (nonatomic, copy) void (^didEnterStateBlock)(TKState *, TKTransition *);
 @property (nonatomic, copy) void (^willExitStateBlock)(TKState *, TKTransition *);
@@ -31,31 +30,55 @@
 
 @implementation TKState
 
-- (instancetype)initWithName:(NSString *)name userInfo:(NSDictionary *)userInfo
+- (instancetype)initWithName:(NSString *)name
 {
     if (![name length]) [NSException raise:NSInvalidArgumentException format:@"The `name` cannot be blank."];
     
     if (self = [super init]) {
         _name = name;
-        _userInfo = userInfo;
     }
     
     return self;
 }
 
-+ (instancetype)stateWithName:(NSString *)name userInfo:(NSDictionary *)userInfo
-{
-    return [[self alloc] initWithName:name userInfo:userInfo];
-}
-
 + (instancetype)stateWithName:(NSString *)name
 {
-    return [self stateWithName:name userInfo:nil];
+    return [[self alloc] initWithName:name];
 }
 
 - (NSString *)description
 {
     return [NSString stringWithFormat:@"<%@:%p '%@'>", NSStringFromClass([self class]), self, self.name];
+}
+
+#pragma mark - Equality
+
+- (BOOL)isEqual:(id)object
+{
+    if (self == object) {
+        return YES;
+    }
+    
+    if (![object isKindOfClass:[TKState class]]) {
+        return NO;
+    }
+    
+    return [self isEqualToState:(TKState*)object];
+}
+
+- (BOOL)isEqualToState:(TKState*)state
+{
+    if (!state) {
+        return NO;
+    }
+    
+    BOOL haveEqualNames = (!_name && !state->_name) || [_name isEqualToString:state->_name];
+    
+    return haveEqualNames;
+}
+
+- (NSUInteger)hash {
+    return [_name hash];
 }
 
 #pragma mark - NSCopying
